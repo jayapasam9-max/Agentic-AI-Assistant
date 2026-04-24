@@ -1,0 +1,21 @@
+# IntelliJ
+.idea/
+*.iml
+
+# Maven build output
+target/
+
+# Environment files (contain secrets!)
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Node modules (for future React dashboard)
+node_modules/

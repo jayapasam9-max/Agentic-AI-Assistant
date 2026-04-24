@@ -79,3 +79,18 @@ The system prompt (`prompts/system_prompt.md`) is the single most important file
 ## License
 
 MIT (see LICENSE).
+
+## Project status
+
+This project is under active development. Current progress:
+
+- [x] Project scaffold and architecture
+- [x] Spring Boot + LangChain4j integration
+- [x] PostgreSQL schema with pgvector
+- [x] Kafka event orchestration
+- [ ] GitHub webhook integration (in progress)
+- [ ] React dashboard for live review viewing
+- [ ] AWS deployment with Terraform
+- [ ] Prometheus/Grafana observability
+
+Built and maintained by [@jayapasam9-max](https://github.com/jayapasam9-max).
