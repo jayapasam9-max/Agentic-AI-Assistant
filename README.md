@@ -48,7 +48,7 @@ ngrok http 8080
 
 ## Building the agent in phases
 
-See the build plan in the project kickoff doc. Short version:
+See [ARCHITECTURE.md](ARCHITECTURE.md) for a full walkthrough of how a PR flows through the system. Short version of the build phases:
 
 - **Phase 0–1:** GitHub webhook + service → prove the loop (webhook in, comment out)
 - **Phase 2:** Schema + pgvector indexing job for repo history
