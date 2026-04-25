@@ -46,8 +46,11 @@ public class ReviewOrchestrator {
 
     public void runReview(UUID jobId, String githubFullName, int prNumber, String headSha) {
         Timer.Sample sample = Timer.start(meterRegistry);
+        // Load the job record from the database using its ID
         ReviewJob job = jobRepo.findById(jobId).orElseThrow();
+        // Mark the job as RUNNING in the database
         job.setStatus(ReviewJob.Status.RUNNING);
+        // Save the start time to the database for our records
         job.setStartedAt(OffsetDateTime.now());
         jobRepo.save(job);
         emit(jobId, ReviewEvent.Type.JOB_STARTED, "");
@@ -69,6 +72,7 @@ public class ReviewOrchestrator {
                     JsonNode node = mapper.readTree(line);
                     persistAndPostFinding(job, node);
                 } catch (Exception e) {
+                    // Skips the empty lines
                     log.warn("Skipping malformed finding line: {}", line, e);
                 }
             }
@@ -78,6 +82,7 @@ public class ReviewOrchestrator {
             jobRepo.save(job);
             emit(jobId, ReviewEvent.Type.JOB_COMPLETED, "");
         } catch (Exception e) {
+            // Something went wrong during the review — log the error
             log.error("Review job {} failed", jobId, e);
             job.setStatus(ReviewJob.Status.FAILED);
             job.setErrorMessage(e.getMessage());
