@@ -1,3 +1,4 @@
+# Spring Boot core configuration: database, JPA, Flyway migrations, and Kafka clients
 spring:
   application:
     name: code-review-agent
@@ -26,9 +27,11 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+# HTTP server : connects to the backend and wait for the incoming requests
 server:
   port: 8080
 
+# Spring actuator endpoints for monitoring
 management:
   endpoints:
     web:
@@ -39,26 +42,31 @@ management:
       percentiles-histogram:
         http.server.requests: true
 
+# Claude API configuration: api key, model and maximum tokens
 anthropic:
   api-key: ${ANTHROPIC_API_KEY}
   model: claude-opus-4-7
   max-tokens: 8192
 
+# GitHub credentials to verify the webhooks and post the GitHub comments on the pull requests
 github:
   app-id: ${GITHUB_APP_ID:}
   private-key: ${GITHUB_PRIVATE_KEY:}
   webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
 
+# Code review agent settings: max tool-call iterations and paths to external tools
 agent:
   max-iterations: 15
   tools:
     semgrep-path: ${SEMGREP_PATH:semgrep}
     trivy-path: ${TRIVY_PATH:trivy}
 
+# Kafka topics used by the application
 kafka-topics:
   review-jobs: review-jobs
   review-events: review-events
 
+# Log level configuration — DEBUG for our code, INFO for LangChain4j
 logging:
   level:
     com.codereview.agent: DEBUG
