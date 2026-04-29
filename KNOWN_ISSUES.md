@@ -2,38 +2,41 @@
 
 This document tracks issues encountered while setting up and running the project locally. Each entry includes the symptom, the cause, and the workaround or planned fix.
 
-## 1. Maven Wrapper (`mvnw`) missing
+## 1. ~~Maven Wrapper (`mvnw`) missing~~ ✅ RESOLVED
 
-**Symptom**
+**Status:** Resolved on 2026-04-29.
 
-Running `./mvnw spring-boot:run` from inside the `backend/` directory produces:
+**Original symptom**
+
+Running `./mvnw spring-boot:run` from inside the `backend/` directory produced:
+
+```
+zsh: no such file or directory: ./mvnw
+```
 
 **Cause**
 
-The repository contains `backend/pom.xml` but not the Maven Wrapper files (`mvnw`, `mvnw.cmd`, and the `.mvn/` directory). The README instructs users to run `./mvnw`, which won't work without these files.
+The repository contained `backend/pom.xml` but not the Maven Wrapper files (`mvnw`, `mvnw.cmd`, and the `.mvn/` directory).
 
-**Workaround**
+**Fix**
 
-Install Maven globally and use `mvn` instead of `./mvnw`:
+Generated the Maven Wrapper using a system-installed Maven:
 
 ```bash
 brew install maven
 cd backend
-mvn spring-boot:run
+mvn wrapper:wrapper
 ```
 
-**Planned fix**
+This created `mvnw`, `mvnw.cmd`, and `.mvn/wrapper/maven-wrapper.properties`. The wrapper was committed in commit "Add Maven wrapper for portable builds".
 
-Generate the Maven Wrapper and commit it to the repo:
+**Verification**
 
 ```bash
 cd backend
-mvn wrapper:wrapper
-git add mvnw mvnw.cmd .mvn
-git commit -m "Add Maven Wrapper for portable builds"
+./mvnw --version
+# Apache Maven 3.9.15
 ```
-
-This is tracked for a future commit.
 
 ## 2. Docker Compose `version` attribute is obsolete (warning)
 
