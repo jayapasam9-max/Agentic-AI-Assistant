@@ -64,3 +64,49 @@ When something breaks during setup or local development, add a new section above
 2. **Cause** — what's actually wrong
 3. **Workaround** — how to keep going for now
 4. **Planned fix** — what should happen long-term, if known
+
+## 3. Lombok annotations not generating code (compilation fails)
+
+**Symptom**
+
+Running `./mvnw test` from the `backend/` directory fails with ~47 compilation errors like:
+
+```
+cannot find symbol: method setStatus(...)
+cannot find symbol: method builder()
+cannot find symbol: variable log
+```
+
+These errors appear in every class that uses Lombok annotations — `ReviewOrchestrator.java`, `ReviewJob.java`, `ReviewFinding.java`, `GitHubService.java`, `CodeReviewTools.java`, `GitHubWebhookController.java`, `ReviewJobConsumer.java`, and `ReviewStreamController.java`.
+
+**Cause**
+
+The project uses Lombok (`@Getter`, `@Setter`, `@Builder`, `@Slf4j`, `@RequiredArgsConstructor`) to generate boilerplate code at compile time. The Maven Compiler plugin is not configured to run Lombok's annotation processor, so none of the expected methods (getters, setters, the `builder()` static method, the `log` variable, etc.) get generated.
+
+The result: every reference to a generated method or field is reported as "cannot find symbol".
+
+**Workaround**
+
+None currently — the project does not compile from the command line until this is fixed.
+
+**Planned fix**
+
+Configure the `maven-compiler-plugin` in `backend/pom.xml` to run Lombok as an annotation processor:
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <configuration>
+        <annotationProcessorPaths>
+            <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </path>
+        </annotationProcessorPaths>
+    </configuration>
+</plugin>
+```
+
+This is tracked for a future commit.
