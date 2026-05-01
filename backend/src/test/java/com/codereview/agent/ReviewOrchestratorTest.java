@@ -98,4 +98,22 @@ class ReviewOrchestratorTest {
         assertThat(finalState.getStatus()).isEqualTo(ReviewJob.Status.FAILED);
         assertThat(finalState.getErrorMessage()).contains("GitHub API down");
     }
+    @Test
+    void parsesZeroFindingsWhenAgentReturnsOnlyCompleteMarker() throws Exception {
+        // Arrange — set up the job to be loaded from the database
+        when(jobRepo.findById(jobId)).thenReturn(Optional.of(job));
+        when(jobRepo.save(any(ReviewJob.class))).thenAnswer(i -> i.getArgument(0));
+        when(gitHubService.fetchPullRequestDiff(anyString(), anyInt())).thenReturn("fake diff");
+
+        // Agent returns nothing but the completion marker — a clean review with no issues
+        String agentOutput = "<REVIEW_COMPLETE>\n";
+        when(agent.reviewPullRequest(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(agentOutput);
+
+        // Act — run the review
+        orchestrator.runReview(jobId, "octocat/hello", 42, "abc123");
+
+        // Assert — no findings were saved to the database
+        verify(findingRepo, never()).save(any(ReviewFinding.class));
+    }
 }
