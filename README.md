@@ -1,5 +1,16 @@
 # Agentic Code Review Assistant
 
+![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3-6DB33F?logo=springboot&logoColor=white)
+![LangChain4j](https://img.shields.io/badge/LangChain4j-0.35-1C3D5A)
+![Claude](https://img.shields.io/badge/Claude-Opus%204.7-D97757?logo=anthropic&logoColor=white)
+![Kafka](https://img.shields.io/badge/Apache%20Kafka-3.7-231F20?logo=apachekafka&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![pgvector](https://img.shields.io/badge/pgvector-0.7-4169E1)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Terraform](https://img.shields.io/badge/Terraform-AWS-7B42BC?logo=terraform&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+
 An autonomous code review agent that analyzes GitHub pull requests, flags security and performance issues, and posts inline comments — backed by Claude, LangChain4j, Kafka, and Postgres with pgvector.
 
 ## Repository layout
@@ -26,6 +37,16 @@ An autonomous code review agent that analyzes GitHub pull requests, flags securi
 ├── docker-compose.yml        Local dev stack (Postgres+pgvector, Kafka)
 └── README.md
 ```
+
+## Screenshots
+
+> 🎨 Screenshots coming soon. The React dashboard and live agent reasoning views are in development.
+>
+> Once available, this section will include:
+> - Live review viewer (SSE streaming reasoning + findings)
+> - Per-repository policy configuration page
+> - Grafana dashboard showing token usage and review latency
+> - Example inline GitHub PR comment posted by the agent
 
 ## Quickstart (local)
 
