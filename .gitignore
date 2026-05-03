@@ -19,3 +19,6 @@ target/
 
 # Node modules (for future React dashboard)
 node_modules/
+
+# Personal planning notes (not for the public repo)
+PHASE_*_SCHEDULE.md
