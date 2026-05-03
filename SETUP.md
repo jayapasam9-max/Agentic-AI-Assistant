@@ -8,7 +8,7 @@ You'll need the following installed on your Mac:
 
 | Tool | Version | Purpose |
 |---|---|---|
-| **Java** | 21 or newer | Building and running the Spring Boot backend |
+| **Java** | 21 (exact) | Building and running the Spring Boot backend. JDK 23+ breaks Lombok 1.18.34, JDK 25 breaks Mockito's inline mock-maker on Spring Boot 3.3.4. Pin 21. |
 | **Docker Desktop** | 24 or newer | Running Postgres + Kafka locally via docker-compose |
 | **Git** | Any recent version | Version control |
 | **IntelliJ IDEA** | Community or Ultimate | Java IDE (Maven support built-in) |
@@ -18,7 +18,7 @@ You'll need the following installed on your Mac:
 I built and tested this project on:
 
 - **macOS** (Apple Silicon)
-- **Java**: OpenJDK 25 (Temurin) — note: project targets Java 21, but newer JDK works fine
+- **Java**: Temurin 21 (pinned). The project initially compiled on Temurin 25 but unit tests failed because Spring Boot 3.3.4 ships a Mockito + ByteBuddy combo that can't instrument JDK 25 classes. See `KNOWN_ISSUES.md` #3 for the full diagnosis.
 - **Docker Desktop**: 4.70.0
 - **Git**: 2.50+
 - **IntelliJ IDEA**: Community Edition
@@ -44,9 +44,18 @@ If any of them say `command not found`, install the missing tool before continui
 
 ## Optional but useful
 
-- **SDKMAN** — a Java version manager. Not required if your existing Java works, but useful if you need to switch between Java versions for different projects. Install with:
+- **SDKMAN** — a Java version manager. Recommended for this project so you can pin JDK 21 without changing your system default:
 ```bash
-  curl -s "https://get.sdkman.io" | bash
+curl -s "https://get.sdkman.io" | bash
+sdk install java 21.0.5-tem
+sdk use java 21.0.5-tem
+```
+
+Or install Temurin 21 via Homebrew and export `JAVA_HOME` per shell:
+```bash
+brew install --cask temurin@21
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
 ## Running the project locally

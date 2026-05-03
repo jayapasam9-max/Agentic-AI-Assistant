@@ -76,11 +76,16 @@ class ReviewOrchestratorTest {
         orchestrator.runReview(jobId, "octocat/hello", 42, "abc123");
 
         ArgumentCaptor<ReviewFinding> captor = ArgumentCaptor.forClass(ReviewFinding.class);
-        verify(findingRepo, times(2)).save(captor.capture());
-        List<ReviewFinding> saved = captor.getAllValues();
-        assertThat(saved).extracting(ReviewFinding::getSeverity)
+        // Each finding is saved twice: once to assign an id, then again after
+        // the GitHub inline comment is posted (to flip postedToGithub=true).
+        verify(findingRepo, times(4)).save(captor.capture());
+        List<ReviewFinding> distinctFindings = captor.getAllValues().stream()
+                .distinct()
+                .toList();
+        assertThat(distinctFindings).hasSize(2);
+        assertThat(distinctFindings).extracting(ReviewFinding::getSeverity)
                 .containsExactly(ReviewFinding.Severity.HIGH, ReviewFinding.Severity.LOW);
-        assertThat(saved.get(0).getMessage()).isEqualTo("SQL injection");
+        assertThat(distinctFindings.get(0).getMessage()).isEqualTo("SQL injection");
     }
 
     @Test
