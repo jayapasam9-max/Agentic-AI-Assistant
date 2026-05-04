@@ -1,5 +1,6 @@
 package com.codereview.agent.agent;
 
+import com.codereview.agent.bus.ReviewBus;
 import com.codereview.agent.github.GitHubService;
 import com.codereview.agent.kafka.event.ReviewEvent;
 import com.codereview.agent.persistence.entity.ReviewFinding;
@@ -12,8 +13,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -37,12 +36,9 @@ public class ReviewOrchestrator {
     private final GitHubService gitHubService;
     private final ReviewJobRepository jobRepo;
     private final ReviewFindingRepository findingRepo;
-    private final KafkaTemplate<String, Object> kafka;
+    private final ReviewBus reviewBus;
     private final ObjectMapper mapper;
     private final MeterRegistry meterRegistry;
-
-    @Value("${kafka-topics.review-events}")
-    private String reviewEventsTopic;
 
     public void runReview(UUID jobId, String githubFullName, int prNumber, String headSha) {
         Timer.Sample sample = Timer.start(meterRegistry);
@@ -140,6 +136,6 @@ public class ReviewOrchestrator {
     }
 
     private void emit(UUID jobId, ReviewEvent.Type type, String payload) {
-        kafka.send(reviewEventsTopic, jobId.toString(), new ReviewEvent(jobId, type, payload));
+        reviewBus.publishEvent(new ReviewEvent(jobId, type, payload));
     }
 }

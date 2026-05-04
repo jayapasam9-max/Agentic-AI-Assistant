@@ -2,6 +2,7 @@ package com.codereview.agent;
 
 import com.codereview.agent.agent.CodeReviewerAgent;
 import com.codereview.agent.agent.ReviewOrchestrator;
+import com.codereview.agent.bus.ReviewBus;
 import com.codereview.agent.github.GitHubService;
 import com.codereview.agent.persistence.entity.ReviewFinding;
 import com.codereview.agent.persistence.entity.ReviewJob;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +32,7 @@ class ReviewOrchestratorTest {
     @Mock GitHubService gitHubService;
     @Mock ReviewJobRepository jobRepo;
     @Mock ReviewFindingRepository findingRepo;
-    @Mock KafkaTemplate<String, Object> kafka;
+    @Mock ReviewBus reviewBus;
 
     ReviewOrchestrator orchestrator;
     UUID jobId;
@@ -41,7 +41,7 @@ class ReviewOrchestratorTest {
     @BeforeEach
     void setUp() {
         orchestrator = new ReviewOrchestrator(
-                agent, gitHubService, jobRepo, findingRepo, kafka,
+                agent, gitHubService, jobRepo, findingRepo, reviewBus,
                 new ObjectMapper(), new SimpleMeterRegistry());
         jobId = UUID.randomUUID();
         job = ReviewJob.builder()

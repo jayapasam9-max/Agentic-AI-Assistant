@@ -1,5 +1,6 @@
 package com.codereview.agent.github;
 
+import com.codereview.agent.bus.ReviewBus;
 import com.codereview.agent.kafka.event.ReviewJobRequested;
 import com.codereview.agent.persistence.entity.ReviewJob;
 import com.codereview.agent.persistence.repository.ReviewJobRepository;
@@ -7,15 +8,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
 /**
- * Receives webhooks from GitHub. Responds fast (<10s) by enqueueing work to Kafka.
+ * Receives webhooks from GitHub. Responds fast (<10s) by enqueueing work via
+ * the {@link ReviewBus}, which fronts whichever transport is configured
+ * (Kafka by default).
  *
  * GitHub event types handled:
  *   - pull_request (action: opened, synchronize, reopened)
@@ -28,11 +29,8 @@ public class GitHubWebhookController {
 
     private final GitHubService gitHubService;
     private final ReviewJobRepository jobRepo;
-    private final KafkaTemplate<String, Object> kafka;
+    private final ReviewBus reviewBus;
     private final ObjectMapper mapper;
-
-    @Value("${kafka-topics.review-jobs}")
-    private String reviewJobsTopic;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(
@@ -75,8 +73,8 @@ public class GitHubWebhookController {
                 .status(ReviewJob.Status.QUEUED)
                 .build());
 
-        // Push the job to Kafka so a worker can pick it up and run the review
-        kafka.send(reviewJobsTopic, job.getId().toString(),
+        // Hand the job off to the bus so a worker can pick it up and run the review
+        reviewBus.publishJob(
                 new ReviewJobRequested(job.getId(), repoId, fullName, prNumber, headSha, installationId));
 
         log.info("Enqueued review job {} for {} #{}", job.getId(), fullName, prNumber);
