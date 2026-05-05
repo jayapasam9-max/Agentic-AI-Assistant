@@ -128,3 +128,36 @@ Two compatibility walls hit before the build went green:
 **Sub-issue: stale test expectation in `ReviewOrchestratorTest`**
 
 Once the build compiled and Mockito worked, `parsesFindingsFromAgentOutput` failed with `TooManyActualInvocations: wanted 2 times, but was 4`. The test was written before `persistAndPostFinding` was changed to save each finding twice (once for the id, once after the GitHub comment posts to flip `postedToGithub=true`). Fixed the test to expect 4 saves and dedupe captures by reference identity. Production code unchanged.
+
+## 4. `EmbeddingModel` bean missing — app fails to start (stubbed)
+
+**Status:** Stubbed on 2026-05-05 to unblock startup. Real fix tracked below.
+
+**Symptom**
+
+Running `./mvnw spring-boot:run` (in any profile) fails before serving any traffic with:
+
+```
+APPLICATION FAILED TO START
+Parameter 1 of constructor in com.codereview.agent.agent.tools.CodeReviewTools
+required a bean of type 'dev.langchain4j.model.embedding.EmbeddingModel'
+that could not be found.
+```
+
+**Cause**
+
+`CodeReviewTools` autowires an `EmbeddingModel` to power the `searchRepoContext` tool (semantic search over indexed repo history). `LangChainConfig` defined the `EmbeddingStore` (pgvector) and `ChatLanguageModel` (Anthropic) but never provided an `EmbeddingModel`. Spring's bean graph fails on startup because the dependency is required, not optional.
+
+**Stub fix**
+
+Added a stub `EmbeddingModel` bean in `LangChainConfig` that returns 1536-dimensional zero vectors (matching the `code_embeddings.embedding` column dimension). The app now boots cleanly. The `searchRepoContext` tool returns no useful results — but it wasn't being used in any verified flow yet, so this is a no-op regression.
+
+**Real fix (planned)**
+
+Replace the stub with one of:
+
+- **Voyage AI** (`langchain4j-voyage-ai`) — Anthropic's recommended embedding model; requires `VOYAGE_API_KEY`.
+- **OpenAI text-embedding-3-small** — 1536 dim by default, matches existing pgvector schema.
+- **Local ONNX (AllMpnetBaseV2 or similar)** — runs in-process, no API key, but typically 768 dim → requires a Flyway migration to change `vector(1536)` to `vector(768)`.
+
+Tracked for a future commit. Until then, the stub keeps the app bootable so other phases of the project can be verified.
