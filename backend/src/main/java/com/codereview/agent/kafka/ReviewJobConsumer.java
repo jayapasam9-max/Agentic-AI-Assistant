@@ -4,10 +4,20 @@ import com.codereview.agent.agent.ReviewOrchestrator;
 import com.codereview.agent.kafka.event.ReviewJobRequested;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+/**
+ * Kafka consumer that pulls review jobs off the {@code review-jobs} topic
+ * and hands them to the orchestrator.
+ *
+ * <p>Disabled when {@code review-bus.type=in-process} (cloud-free profile);
+ * see {@link com.codereview.agent.bus.InProcessReviewJobListener} for the
+ * in-process counterpart.
+ */
 @Component
+@ConditionalOnProperty(name = "review-bus.type", havingValue = "kafka", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
 public class ReviewJobConsumer {

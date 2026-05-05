@@ -4,6 +4,7 @@ import com.codereview.agent.kafka.event.ReviewJobRequested;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -15,7 +16,12 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Kafka consumer wiring. Disabled in cloud-free mode so the app boots
+ * cleanly without a Kafka broker.
+ */
 @Configuration
+@ConditionalOnProperty(name = "review-bus.type", havingValue = "kafka", matchIfMissing = true)
 @EnableKafka
 public class KafkaConfig {
 

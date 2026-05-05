@@ -1,0 +1,19 @@
+# Free-tier overlay: no Kafka, in-process event bus.
+# Activated via SPRING_PROFILES_ACTIVE=cloud-free.
+#
+# Today (Day 3) this profile only swaps Kafka for in-process events; the
+# database still points at localhost via the default in application.yml.
+# Day 4 will add Neon Postgres connection details on top of this overlay.
+
+spring:
+  kafka:
+    # Empty bootstrap-servers prevents any accidental Kafka connection attempts.
+    # All Kafka beans (KafkaConfig, KafkaReviewBus, ReviewJobConsumer,
+    # ReviewStreamController) are gated behind review-bus.type=kafka and
+    # disabled in this profile, so no client ever tries to connect.
+    bootstrap-servers: ""
+
+review-bus:
+  # Switches the bus from Kafka to Spring's in-process ApplicationEventPublisher.
+  # Activates InProcessReviewBus + InProcessReviewJobListener + AsyncConfig.
+  type: in-process

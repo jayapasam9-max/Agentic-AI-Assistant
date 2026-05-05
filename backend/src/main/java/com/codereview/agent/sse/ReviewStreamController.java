@@ -4,6 +4,7 @@ import com.codereview.agent.kafka.event.ReviewEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -20,8 +21,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Clients GET /api/reviews/{jobId}/stream and keep the connection open.
  * The controller listens to the Kafka topic, filters events by jobId, and
  * pushes them down the SSE emitter.
+ *
+ * <p>Disabled in cloud-free mode (no Kafka broker available). A symmetric
+ * in-process forwarder will be added in a later phase so the dashboard works
+ * on the free-tier deploy too.
  */
 @RestController
+@ConditionalOnProperty(name = "review-bus.type", havingValue = "kafka", matchIfMissing = true)
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
 @Slf4j

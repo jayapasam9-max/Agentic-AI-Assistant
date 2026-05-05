@@ -4,6 +4,7 @@ import com.codereview.agent.kafka.event.ReviewEvent;
 import com.codereview.agent.kafka.event.ReviewJobRequested;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -14,8 +15,12 @@ import org.springframework.stereotype.Component;
  *
  * <p>The job's id is used as the partition key so all events for a given PR
  * land on the same partition and stay ordered.
+ *
+ * <p>Activated by default. Set {@code review-bus.type=in-process} to swap in
+ * {@link InProcessReviewBus} (used by the {@code cloud-free} profile).
  */
 @Component
+@ConditionalOnProperty(name = "review-bus.type", havingValue = "kafka", matchIfMissing = true)
 @RequiredArgsConstructor
 public class KafkaReviewBus implements ReviewBus {
 
