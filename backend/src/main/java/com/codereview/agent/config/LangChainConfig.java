@@ -7,7 +7,7 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.pgvector.PgVectorEmbeddingStore;
+import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,17 +35,14 @@ public class LangChainConfig {
 
     @Bean
     public EmbeddingStore<TextSegment> embeddingStore() {
-        // Configure pgvector store. Use the same DB as JPA; pgvector extension must be enabled.
-        return PgVectorEmbeddingStore.builder()
-                .host("localhost")
-                .port(5432)
-                .database("codereview")
-                .user("postgres")
-                .password("postgres")
-                .table("code_embeddings")
-                .dimension(EMBEDDING_DIMENSION)
-                .createTable(false) // Flyway owns the schema
-                .build();
+        // Stub: in-memory store. The pgvector-backed PgVectorEmbeddingStore in
+        // langchain4j 0.35 takes raw host/port/user/password and does not honor
+        // JDBC URL params (sslmode=require), which Neon requires. Rather than
+        // hand-roll an SSL-aware variant or upgrade langchain4j, we run with an
+        // in-memory store until embeddings are properly wired (Voyage / OpenAI /
+        // local ONNX). This pairs with the EmbeddingModel stub from Day 3.
+        // Tracked in KNOWN_ISSUES.md #4.
+        return new InMemoryEmbeddingStore<>();
     }
 
     /**
