@@ -1,0 +1,40 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# When this file is in the repo root and you create a new Blueprint on Render,
+# the dashboard reads this and provisions the service automatically. All env
+# vars marked `sync: false` are NOT in this file; you set them once via the
+# Render UI on first deploy.
+
+services:
+  - type: web
+    name: codereview-agent
+    runtime: docker
+    plan: free
+    region: oregon                  # matches Neon's us-west-2 for low latency
+    rootDir: backend                # docker build context is backend/, not repo root
+    dockerfilePath: ./Dockerfile    # relative to rootDir
+    healthCheckPath: /actuator/health
+
+    envVars:
+      # Activates application-cloud-free.yml (in-process bus, no Kafka)
+      - key: SPRING_PROFILES_ACTIVE
+        value: cloud-free
+
+      # All sensitive values are entered once via Render dashboard, never committed.
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+      # GitHub App credentials — leave blank for now, fill in on Day 7 when
+      # we wire the real webhook.
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_PRIVATE_KEY
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
