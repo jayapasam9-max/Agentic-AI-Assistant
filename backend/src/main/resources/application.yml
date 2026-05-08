@@ -54,9 +54,15 @@ github:
   private-key: ${GITHUB_PRIVATE_KEY:}
   webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
 
-# Code review agent settings: max tool-call iterations and paths to external tools
+# Code review agent settings: max tool-call iterations, per-PR budgets,
+# and paths to external tools. The cloud-free profile overrides budget
+# values with tighter caps; see application-cloud-free.yml.
 agent:
   max-iterations: 15
+  budget:
+    max-diff-bytes: 2097152          # 2 MB — generous default for the local/Kafka path
+    max-input-tokens-per-pr: 500000
+    max-output-tokens-per-pr: 50000
   tools:
     semgrep-path: ${SEMGREP_PATH:semgrep}
     trivy-path: ${TRIVY_PATH:trivy}

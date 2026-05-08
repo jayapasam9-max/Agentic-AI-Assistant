@@ -3,6 +3,7 @@ package com.codereview.agent;
 import com.codereview.agent.agent.CodeReviewerAgent;
 import com.codereview.agent.agent.ReviewOrchestrator;
 import com.codereview.agent.bus.ReviewBus;
+import com.codereview.agent.config.AgentBudget;
 import com.codereview.agent.github.GitHubService;
 import com.codereview.agent.persistence.entity.ReviewFinding;
 import com.codereview.agent.persistence.entity.ReviewJob;
@@ -40,9 +41,11 @@ class ReviewOrchestratorTest {
 
     @BeforeEach
     void setUp() {
+        // Tight budget so the existing tests don't accidentally trip the diff guard.
+        AgentBudget budget = new AgentBudget(512_000L, 200_000L, 20_000L);
         orchestrator = new ReviewOrchestrator(
                 agent, gitHubService, jobRepo, findingRepo, reviewBus,
-                new ObjectMapper(), new SimpleMeterRegistry());
+                new ObjectMapper(), new SimpleMeterRegistry(), budget);
         jobId = UUID.randomUUID();
         job = ReviewJob.builder()
                 .id(jobId)
@@ -120,5 +123,28 @@ class ReviewOrchestratorTest {
 
         // Assert — no findings were saved to the database
         verify(findingRepo, never()).save(any(ReviewFinding.class));
+    }
+
+    @Test
+    void skipsReviewWhenDiffExceedsBudget() throws Exception {
+        // Arrange — return a diff bigger than the 512 KB budget set in setUp().
+        when(jobRepo.findById(jobId)).thenReturn(Optional.of(job));
+        when(jobRepo.save(any(ReviewJob.class))).thenAnswer(i -> i.getArgument(0));
+        when(gitHubService.fetchPullRequestDiff(anyString(), anyInt()))
+                .thenReturn("x".repeat(600_000)); // 600 KB > 512 KB budget
+
+        // Act
+        orchestrator.runReview(jobId, "octocat/hello", 42, "abc123");
+
+        // Assert — the agent and finding repo were never touched.
+        verifyNoInteractions(agent);
+        verify(findingRepo, never()).save(any(ReviewFinding.class));
+
+        // Job ends up COMPLETED (not retried) with a clear skip reason.
+        ArgumentCaptor<ReviewJob> captor = ArgumentCaptor.forClass(ReviewJob.class);
+        verify(jobRepo, atLeast(1)).save(captor.capture());
+        ReviewJob finalState = captor.getAllValues().get(captor.getAllValues().size() - 1);
+        assertThat(finalState.getStatus()).isEqualTo(ReviewJob.Status.COMPLETED);
+        assertThat(finalState.getErrorMessage()).contains("too large");
     }
 }

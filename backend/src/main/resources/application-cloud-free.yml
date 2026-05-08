@@ -1,9 +1,5 @@
-# Free-tier overlay: no Kafka, in-process event bus.
+# Free-tier overlay: no Kafka, in-process event bus, tight cost caps.
 # Activated via SPRING_PROFILES_ACTIVE=cloud-free.
-#
-# Today (Day 3) this profile only swaps Kafka for in-process events; the
-# database still points at localhost via the default in application.yml.
-# Day 4 will add Neon Postgres connection details on top of this overlay.
 
 spring:
   kafka:
@@ -17,3 +13,13 @@ review-bus:
   # Switches the bus from Kafka to Spring's in-process ApplicationEventPublisher.
   # Activates InProcessReviewBus + InProcessReviewJobListener + AsyncConfig.
   type: in-process
+
+# Tighter agent caps for the free-tier deploy. The diff-byte limit is the
+# only one currently enforced (see AgentBudget Javadoc); the token caps are
+# declared so the wiring is in place when LangChain4j exposes a hook.
+agent:
+  max-iterations: 8
+  budget:
+    max-diff-bytes: 512000           # 500 KB — pathological PRs get skipped
+    max-input-tokens-per-pr: 200000
+    max-output-tokens-per-pr: 20000

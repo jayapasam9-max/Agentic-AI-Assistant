@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties({AnthropicProperties.class, GitHubProperties.class})
+@EnableConfigurationProperties({AnthropicProperties.class, GitHubProperties.class, AgentBudget.class})
 public class LangChainConfig {
 
     /** Dimension of the {@code code_embeddings.embedding} column in pgvector. */

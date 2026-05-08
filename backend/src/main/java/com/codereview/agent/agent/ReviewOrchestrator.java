@@ -1,6 +1,7 @@
 package com.codereview.agent.agent;
 
 import com.codereview.agent.bus.ReviewBus;
+import com.codereview.agent.config.AgentBudget;
 import com.codereview.agent.github.GitHubService;
 import com.codereview.agent.kafka.event.ReviewEvent;
 import com.codereview.agent.persistence.entity.ReviewFinding;
@@ -39,6 +40,7 @@ public class ReviewOrchestrator {
     private final ReviewBus reviewBus;
     private final ObjectMapper mapper;
     private final MeterRegistry meterRegistry;
+    private final AgentBudget budget;
 
     public void runReview(UUID jobId, String githubFullName, int prNumber, String headSha) {
         Timer.Sample sample = Timer.start(meterRegistry);
@@ -53,6 +55,22 @@ public class ReviewOrchestrator {
 
         try {
             String diff = gitHubService.fetchPullRequestDiff(githubFullName, prNumber);
+
+            // Cost guardrail: skip pathologically large PRs before any Claude call.
+            // A single 50K-line diff can easily exhaust a per-PR token budget on
+            // input alone. Better to mark the job complete with a clear reason
+            // than to start a runaway tool-call loop we can't cleanly abort.
+            if (diff.length() > budget.maxDiffBytes()) {
+                log.warn("PR #{} diff is {} bytes, over budget of {} — skipping AI review",
+                        prNumber, diff.length(), budget.maxDiffBytes());
+                job.setStatus(ReviewJob.Status.COMPLETED);
+                job.setErrorMessage("Skipped: diff size " + diff.length()
+                        + " bytes is too large (budget: " + budget.maxDiffBytes() + " bytes)");
+                job.setCompletedAt(OffsetDateTime.now());
+                jobRepo.save(job);
+                emit(jobId, ReviewEvent.Type.JOB_COMPLETED, "skipped: diff too large");
+                return;
+            }
 
             // Single blocking call — LangChain4j drives the tool-use loop internally.
             // For true token-by-token streaming, swap CodeReviewerAgent to return TokenStream
