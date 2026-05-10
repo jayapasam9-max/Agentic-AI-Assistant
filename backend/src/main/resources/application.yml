@@ -48,11 +48,14 @@ anthropic:
   model: claude-opus-4-7
   max-tokens: 8192
 
-# GitHub credentials to verify the webhooks and post the GitHub comments on the pull requests
+# GitHub credentials to verify the webhooks and post the GitHub comments on the pull requests.
+# token = GitHub Personal Access Token (PAT) for fetching diffs and posting review comments.
+# app-id + private-key are reserved for future GitHub App installation auth (Phase 2 work).
 github:
   app-id: ${GITHUB_APP_ID:}
   private-key: ${GITHUB_PRIVATE_KEY:}
   webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
+  token: ${GITHUB_TOKEN:}
 
 # Code review agent settings: max tool-call iterations, per-PR budgets,
 # and paths to external tools. The cloud-free profile overrides budget

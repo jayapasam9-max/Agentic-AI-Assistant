@@ -84,7 +84,7 @@ public class ReviewOrchestrator {
                 if (!line.startsWith("{")) continue;
                 try {
                     JsonNode node = mapper.readTree(line);
-                    persistAndPostFinding(job, node);
+                    persistAndPostFinding(job, node, githubFullName);
                 } catch (Exception e) {
                     // Skips the empty lines
                     log.warn("Skipping malformed finding line: {}", line, e);
@@ -109,7 +109,7 @@ public class ReviewOrchestrator {
         }
     }
 
-    private void persistAndPostFinding(ReviewJob job, JsonNode node) throws Exception {
+    private void persistAndPostFinding(ReviewJob job, JsonNode node, String githubFullName) throws Exception {
         ReviewFinding finding = ReviewFinding.builder()
                 .jobId(job.getId())
                 .filePath(node.path("file").asText())
@@ -126,7 +126,7 @@ public class ReviewOrchestrator {
         try {
             if (finding.getLineNumber() != null) {
                 gitHubService.postInlineComment(
-                        /* fullName */ "", // TODO: resolve from job.repositoryId
+                        githubFullName,
                         job.getPrNumber(),
                         job.getHeadSha(),
                         finding.getFilePath(),
