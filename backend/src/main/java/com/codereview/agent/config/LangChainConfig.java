@@ -25,7 +25,11 @@ public class LangChainConfig {
     @Bean
     public ChatLanguageModel chatLanguageModel(AnthropicProperties props) {
         return AnthropicChatModel.builder()
-                .apiKey(props.apiKey())
+                // .trim() guards against the same trailing-newline-on-paste class
+                // of bug we hit with GITHUB_TOKEN on Day 7. Env-var values copied
+                // out of TextEdit on macOS often carry a stray \n that breaks the
+                // x-api-key header check.
+                .apiKey(props.apiKey().trim())
                 .modelName(props.model())
                 .maxTokens(props.maxTokens())
                 .logRequests(true)
