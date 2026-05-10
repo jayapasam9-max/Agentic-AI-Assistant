@@ -80,7 +80,7 @@ public class GitHubService {
         log.info("Fetching diff for {} #{}", fullName, prNumber);
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(GITHUB_API + "/repos/" + fullName + "/pulls/" + prNumber))
-                .header("Authorization", "Bearer " + props.token())
+                .header("Authorization", "Bearer " + props.token().trim())
                 .header("Accept", "application/vnd.github.diff")
                 .header("X-GitHub-Api-Version", API_VERSION)
                 .header("User-Agent", "codereview-agent")
@@ -119,7 +119,7 @@ public class GitHubService {
         ));
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(GITHUB_API + "/repos/" + fullName + "/pulls/" + prNumber + "/comments"))
-                .header("Authorization", "Bearer " + props.token())
+                .header("Authorization", "Bearer " + props.token().trim())
                 .header("Accept", "application/vnd.github+json")
                 .header("Content-Type", "application/json")
                 .header("X-GitHub-Api-Version", API_VERSION)
