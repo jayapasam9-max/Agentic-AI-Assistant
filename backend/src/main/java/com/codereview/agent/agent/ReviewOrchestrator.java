@@ -77,18 +77,33 @@ public class ReviewOrchestrator {
             // and emit REASONING_CHUNK events from the callback.
             String result = agent.reviewPullRequest(githubFullName, String.valueOf(prNumber), headSha, diff);
 
-            // Parse JSON lines; ignore anything that isn't a valid finding object.
-            for (String line : result.split("\\r?\\n")) {
-                line = line.trim();
-                if (line.isEmpty() || line.equals("<REVIEW_COMPLETE>")) continue;
-                if (!line.startsWith("{")) continue;
-                try {
-                    JsonNode node = mapper.readTree(line);
-                    persistAndPostFinding(job, node, githubFullName);
-                } catch (Exception e) {
-                    // Skips the empty lines
-                    log.warn("Skipping malformed finding line: {}", line, e);
+            // Log the raw agent output so we can diagnose findings that don't parse.
+            // The system prompt asks Claude to emit JSON Lines, but in practice models
+            // sometimes wrap in markdown code fences or pretty-print across lines.
+            log.info("Agent output for job {} ({} chars):\n{}", jobId, result.length(), result);
+
+            // Scan the entire response for top-level JSON objects rather than parsing
+            // line-by-line. This tolerates ```json fences, pretty-printed objects, and
+            // explanatory prose between findings. Jackson's streaming parser walks the
+            // stream and surfaces every START_OBJECT token at the top level.
+            try (com.fasterxml.jackson.core.JsonParser parser = mapper.getFactory().createParser(result)) {
+                while (parser.nextToken() != null) {
+                    if (parser.currentToken() == com.fasterxml.jackson.core.JsonToken.START_OBJECT) {
+                        try {
+                            JsonNode node = mapper.readTree(parser);
+                            // A finding must at least have file + message — filters out
+                            // any incidental JSON objects in the response (e.g., examples
+                            // in Claude's reasoning).
+                            if (node.hasNonNull("file") && node.hasNonNull("message")) {
+                                persistAndPostFinding(job, node, githubFullName);
+                            }
+                        } catch (Exception e) {
+                            log.warn("Skipping malformed finding object", e);
+                        }
+                    }
                 }
+            } catch (Exception e) {
+                log.warn("Failed to scan agent output for findings", e);
             }
 
             job.setStatus(ReviewJob.Status.COMPLETED);
