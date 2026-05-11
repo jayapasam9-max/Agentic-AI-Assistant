@@ -78,32 +78,25 @@ public class ReviewOrchestrator {
             String result = agent.reviewPullRequest(githubFullName, String.valueOf(prNumber), headSha, diff);
 
             // Log the raw agent output so we can diagnose findings that don't parse.
-            // The system prompt asks Claude to emit JSON Lines, but in practice models
-            // sometimes wrap in markdown code fences or pretty-print across lines.
             log.info("Agent output for job {} ({} chars):\n{}", jobId, result.length(), result);
 
-            // Scan the entire response for top-level JSON objects rather than parsing
-            // line-by-line. This tolerates ```json fences, pretty-printed objects, and
-            // explanatory prose between findings. Jackson's streaming parser walks the
-            // stream and surfaces every START_OBJECT token at the top level.
-            try (com.fasterxml.jackson.core.JsonParser parser = mapper.getFactory().createParser(result)) {
-                while (parser.nextToken() != null) {
-                    if (parser.currentToken() == com.fasterxml.jackson.core.JsonToken.START_OBJECT) {
-                        try {
-                            JsonNode node = mapper.readTree(parser);
-                            // A finding must at least have file + message — filters out
-                            // any incidental JSON objects in the response (e.g., examples
-                            // in Claude's reasoning).
-                            if (node.hasNonNull("file") && node.hasNonNull("message")) {
-                                persistAndPostFinding(job, node, githubFullName);
-                            }
-                        } catch (Exception e) {
-                            log.warn("Skipping malformed finding object", e);
-                        }
+            // Scan for balanced {...} blocks at depth 0, ignoring everything else.
+            // More tolerant than Jackson's streaming parser, which fails hard when it
+            // hits prose tokens between objects (which Claude routinely produces, even
+            // when told to emit JSON Lines). Tracks string boundaries and escapes so
+            // braces inside string values don't throw off depth counting.
+            for (String json : extractJsonObjects(result)) {
+                try {
+                    JsonNode node = mapper.readTree(json);
+                    // A finding must at least have file + message. Filters out any
+                    // incidental JSON objects (e.g., the example finding in the system
+                    // prompt that Claude sometimes echoes back).
+                    if (node.hasNonNull("file") && node.hasNonNull("message")) {
+                        persistAndPostFinding(job, node, githubFullName);
                     }
+                } catch (Exception e) {
+                    log.warn("Skipping malformed finding object: {}", json, e);
                 }
-            } catch (Exception e) {
-                log.warn("Failed to scan agent output for findings", e);
             }
 
             job.setStatus(ReviewJob.Status.COMPLETED);
@@ -170,5 +163,51 @@ public class ReviewOrchestrator {
 
     private void emit(UUID jobId, ReviewEvent.Type type, String payload) {
         reviewBus.publishEvent(new ReviewEvent(jobId, type, payload));
+    }
+
+    /**
+     * Extract every top-level {@code {...}} block from a string, ignoring any
+     * prose, markdown fences, or other non-JSON text in between. Tracks string
+     * and escape state so braces inside string values don't break depth
+     * counting.
+     *
+     * <p>This is intentionally more permissive than Jackson's streaming parser:
+     * an LLM emitting findings often surrounds them with explanatory prose
+     * (against our prompt's instructions), and a strict parser fails hard on
+     * the first non-JSON token. Brace-matching survives that.
+     */
+    private static java.util.List<String> extractJsonObjects(String input) {
+        java.util.List<String> objects = new java.util.ArrayList<>();
+        if (input == null || input.isEmpty()) return objects;
+
+        int depth = 0;
+        int start = -1;
+        boolean inString = false;
+        boolean escape = false;
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (escape) {
+                escape = false;
+                continue;
+            }
+            if (inString) {
+                if (c == '\\') escape = true;
+                else if (c == '"') inString = false;
+                continue;
+            }
+            if (c == '"') {
+                inString = true;
+            } else if (c == '{') {
+                if (depth == 0) start = i;
+                depth++;
+            } else if (c == '}' && depth > 0) {
+                depth--;
+                if (depth == 0 && start >= 0) {
+                    objects.add(input.substring(start, i + 1));
+                    start = -1;
+                }
+            }
+        }
+        return objects;
     }
 }
