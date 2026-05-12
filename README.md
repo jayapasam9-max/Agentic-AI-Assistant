@@ -40,13 +40,14 @@ An autonomous code review agent that analyzes GitHub pull requests, flags securi
 
 ## Screenshots
 
-> 🎨 Screenshots coming soon. The React dashboard and live agent reasoning views are in development.
->
-> Once available, this section will include:
-> - Live review viewer (SSE streaming reasoning + findings)
-> - Per-repository policy configuration page
-> - Grafana dashboard showing token usage and review latency
-> - Example inline GitHub PR comment posted by the agent
+**Inline review comment — hardcoded password (CRITICAL):**
+![Hardcoded password finding](docs/screenshots/pr-comment-password.png)
+
+**Inline review comment — SQL injection (CRITICAL):**
+![SQL injection finding](docs/screenshots/pr-comment-sqli.png)
+
+**Render service logs — agent run complete:**
+![Render logs](docs/screenshots/render-logs.png)
 
 ## Quickstart (local)
 
@@ -109,7 +110,8 @@ This project is under active development. Current progress:
 - [x] Spring Boot + LangChain4j integration
 - [x] PostgreSQL schema with pgvector
 - [x] Kafka event orchestration
-- [ ] GitHub webhook integration (in progress)
+- [x] GitHub webhook integration — live, posts inline PR comments
+- [x] Free-tier cloud deploy (Render + Neon) — $0/month, live as of 2026-05-11
 - [ ] React dashboard for live review viewing
 - [ ] AWS deployment with Terraform
 - [ ] Prometheus/Grafana observability
