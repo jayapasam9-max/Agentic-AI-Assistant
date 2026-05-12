@@ -129,6 +129,24 @@ Two compatibility walls hit before the build went green:
 
 Once the build compiled and Mockito worked, `parsesFindingsFromAgentOutput` failed with `TooManyActualInvocations: wanted 2 times, but was 4`. The test was written before `persistAndPostFinding` was changed to save each finding twice (once for the id, once after the GitHub comment posts to flip `postedToGithub=true`). Fixed the test to expect 4 saves and dedupe captures by reference identity. Production code unchanged.
 
+## 5. ~~Free-tier deploy not live — agent not posting comments~~ ✅ RESOLVED
+
+**Status:** Resolved on 2026-05-11.
+
+**Original symptom**
+
+The `@UserMessage` annotation was placed on the `repo` parameter of `CodeReviewerAgent.reviewPullRequest(...)` instead of on the method. LangChain4j 0.35 treated the parameter value itself as the entire user message, so Claude received only the string `"jayapasam9-max/codereview-sandbox"` — no diff, no instructions. Claude correctly refused to invent findings and submitted a clean review with no comments.
+
+**Fix**
+
+Moved `@UserMessage` from the parameter to the method level in `CodeReviewerAgent.java` so the full template (including `{{diff}}`) is used as the user message body. Commit: `fix(agent): move @UserMessage to method level so diff reaches the prompt`.
+
+**Verification**
+
+Redelivered the webhook via GitHub's App settings. Render logs showed 6 findings emitted and 6 inline comments posted to `jayapasam9-max/codereview-sandbox #1` (2 CRITICAL, 3 HIGH, 1 LOW). Neon shows corresponding rows in `review_jobs` and `review_findings`.
+
+---
+
 ## 4. `EmbeddingModel` bean missing — app fails to start (stubbed)
 
 **Status:** Stubbed on 2026-05-05 to unblock startup. Real fix tracked below.
