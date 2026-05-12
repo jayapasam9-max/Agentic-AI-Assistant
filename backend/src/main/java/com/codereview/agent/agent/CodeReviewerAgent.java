@@ -30,13 +30,13 @@ public interface CodeReviewerAgent {
      * @return Claude's raw output string, ready for parsing by the orchestrator
      */
     @SystemMessage(fromResource = "prompts/system_prompt.md")
+    @UserMessage("Repository: {{repo}}\nPR #{{pr}}\nHead SHA: {{sha}}\n\n" +
+            "Here is the unified diff:\n{{diff}}\n\n" +
+            "Please review this pull request using your tools. Emit each finding as a JSON object " +
+            "on its own line with schema: {file, line, severity, category, message, suggested_fix}. " +
+            "When you are done, output the token <REVIEW_COMPLETE>.")
     String reviewPullRequest(
-            @V("repo") @UserMessage("Repository: {{repo}}\nPR #{{pr}}\nHead SHA: {{sha}}\n\n" +
-                    "Here is the unified diff:\n{{diff}}\n\n" +
-                    "Please review this pull request using your tools. Emit each finding as a JSON object " +
-                    "on its own line with schema: {file, line, severity, category, message, suggested_fix}. " +
-                    "When you are done, output the token <REVIEW_COMPLETE>.")
-            String repo,
+            @V("repo") String repo,
             @V("pr") String prNumber,
             @V("sha") String sha,
             @V("diff") String diff);
