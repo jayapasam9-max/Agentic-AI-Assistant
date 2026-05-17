@@ -13,6 +13,12 @@
 
 An autonomous code review agent that analyzes GitHub pull requests, flags security and performance issues, and posts inline comments — backed by Claude, LangChain4j, Kafka, and Postgres with pgvector.
 
+## Live demo
+
+**[Open the operator dashboard →](https://agentic-ai-assistant-self.vercel.app)**
+
+React + TypeScript dashboard that watches the agent run in real time. Reviews list, live token-by-token reasoning stream over Server-Sent Events, and a metrics view of daily volume, token usage, and estimated cost. Built with Vite, Tailwind, and TanStack Query; deployed on Vercel Hobby and talking to the Spring Boot backend on Render. **$0/month end-to-end.** Build plan in [PHASE_5_DASHBOARDS.md](PHASE_5_DASHBOARDS.md).
+
 ## Repository layout
 
 ```
@@ -112,7 +118,8 @@ This project is under active development. Current progress:
 - [x] Kafka event orchestration
 - [x] GitHub webhook integration — live, posts inline PR comments
 - [x] Free-tier cloud deploy (Render + Neon) — $0/month, live as of 2026-05-11
-- [ ] React dashboard for live review viewing
+- [x] React dashboard scaffold — [live on Vercel](https://agentic-ai-assistant-self.vercel.app) as of 2026-05-17
+- [ ] React dashboard data wiring — reviews list, live SSE viewer, metrics chart (in progress, see [PHASE_5_DASHBOARDS.md](PHASE_5_DASHBOARDS.md))
 - [ ] AWS deployment with Terraform
 - [ ] Prometheus/Grafana observability
 
