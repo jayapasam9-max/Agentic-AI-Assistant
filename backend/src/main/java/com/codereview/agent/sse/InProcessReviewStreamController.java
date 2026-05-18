@@ -5,8 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.context.event.EventListener;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -16,22 +19,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Connects Kafka review-events to browser clients via Server-Sent Events.
+ * In-process counterpart to {@link ReviewStreamController}.
  *
- * Clients GET /api/reviews/{jobId}/stream and keep the connection open.
- * The controller listens to the Kafka topic, filters events by jobId, and
- * pushes them down the SSE emitter.
+ * <p>Activated when {@code review-bus.type=in-process} (the {@code cloud-free}
+ * profile used on the Render free-tier deploy). Instead of consuming a Kafka
+ * topic, this controller listens for {@link ReviewEvent} on Spring's in-process
+ * event bus and fans events out to subscribed dashboard clients via SSE.
  *
- * <p>Disabled in cloud-free mode (no Kafka broker available). A symmetric
- * in-process forwarder will be added in a later phase so the dashboard works
- * on the free-tier deploy too.
+ * <p>The two controllers are gated on mutually-exclusive
+ * {@code review-bus.type} values, so they never both register — and they share
+ * the same URL ({@code GET /api/public/reviews/{jobId}/stream}) so the
+ * frontend is agnostic to which profile the backend is running.
  */
 @RestController
-@ConditionalOnProperty(name = "review-bus.type", havingValue = "kafka", matchIfMissing = true)
+@ConditionalOnProperty(name = "review-bus.type", havingValue = "in-process")
 @RequestMapping("/api/public/reviews")
 @RequiredArgsConstructor
 @Slf4j
-public class ReviewStreamController {
+public class InProcessReviewStreamController {
 
     // Per-job fan-out — multiple dashboard tabs can watch the same review.
     private final Map<UUID, CopyOnWriteArrayList<SseEmitter>> emitters = new ConcurrentHashMap<>();
@@ -48,11 +53,12 @@ public class ReviewStreamController {
 
         try {
             emitter.send(SseEmitter.event().name("connected").data(jobId.toString()));
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
         return emitter;
     }
 
-    @KafkaListener(topics = "${kafka-topics.review-events}", groupId = "sse-${random.uuid}")
+    @EventListener
     public void onReviewEvent(ReviewEvent event) {
         CopyOnWriteArrayList<SseEmitter> subscribers = emitters.get(event.jobId());
         if (subscribers == null || subscribers.isEmpty()) return;

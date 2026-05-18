@@ -32,18 +32,5 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);
-
-        // The SSE endpoint lives under /api/reviews/{id}/stream (legacy path,
-        // pre-public namespace). Day 3 will move it, but for now mirror the
-        // CORS config so the dashboard can connect on both profiles.
-        registry.addMapping("/api/reviews/**")
-                .allowedOriginPatterns(
-                        "https://agentic-ai-assistant-self.vercel.app",
-                        "https://agentic-ai-assistant-*.vercel.app",
-                        "https://*-jayapasam-s-projects.vercel.app",
-                        "http://localhost:5173")
-                .allowedMethods("GET", "OPTIONS")
-                .allowedHeaders("*")
-                .maxAge(3600);
     }
 }
