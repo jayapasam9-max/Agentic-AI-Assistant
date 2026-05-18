@@ -20,7 +20,14 @@ export default function Layout() {
               <Activity className="h-4 w-4" />
             </span>
             <div className="leading-tight">
-              <div className="text-sm font-semibold">Agentic Code Review</div>
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                Agentic Code Review
+                <span
+                  className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"
+                  aria-label="Live"
+                  title="Live — auto-refreshing every 15s"
+                />
+              </div>
               <div className="text-xs text-muted-foreground">
                 Operator dashboard
               </div>
