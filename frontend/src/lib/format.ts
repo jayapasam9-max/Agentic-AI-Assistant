@@ -47,3 +47,25 @@ export function shortSha(sha: string | null | undefined): string {
   if (!sha) return "—";
   return sha.slice(0, 7);
 }
+
+/** "$0.12", "<$0.01", "$12.34", "$1.2k". Compact but informative. */
+export function formatUsd(n: number | null | undefined): string {
+  if (n == null) return "—";
+  if (n === 0) return "$0.00";
+  if (n < 0.01) return "<$0.01";
+  if (n < 100) return `$${n.toFixed(2)}`;
+  if (n < 1000) return `$${n.toFixed(0)}`;
+  if (n < 1_000_000) return `$${(n / 1000).toFixed(1)}k`;
+  return `$${(n / 1_000_000).toFixed(1)}M`;
+}
+
+/** "May 17" — short month + day, for chart axes. */
+export function shortDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(`${iso}T00:00:00Z`);
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}

@@ -55,6 +55,17 @@ export interface ReviewDetail {
   toolCalls: ToolCall[];
 }
 
+export interface DailyMetric {
+  day: string; // YYYY-MM-DD (Postgres date)
+  reviews: number;
+  completed: number;
+  failed: number;
+  tokensInput: number;
+  tokensOutput: number;
+  tokensTotal: number;
+  costUsd: number;
+}
+
 /** Server-Sent Event types emitted by the agent during a review. */
 export type StreamEventType =
   | "JOB_STARTED"

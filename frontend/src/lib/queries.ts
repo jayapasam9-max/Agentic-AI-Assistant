@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
-import type { ReviewDetail, ReviewSummary } from "./types";
+import type { DailyMetric, ReviewDetail, ReviewSummary } from "./types";
 
 export function useReviewsQuery() {
   return useQuery<ReviewSummary[]>({
@@ -24,5 +24,15 @@ export function useReviewDetailQuery(id: string | undefined) {
       const status = q.state.data?.summary.status;
       return status === "RUNNING" || status === "QUEUED" ? 5_000 : false;
     },
+  });
+}
+
+export function useDailyMetricsQuery(days: number) {
+  return useQuery<DailyMetric[]>({
+    queryKey: ["metrics", "daily", days],
+    queryFn: () => api<DailyMetric[]>(`/api/public/metrics/daily?days=${days}`),
+    // Aggregates are cheap; refresh every 60s so the cards/chart feel alive
+    // without hitting Neon every few seconds.
+    refetchInterval: 60_000,
   });
 }

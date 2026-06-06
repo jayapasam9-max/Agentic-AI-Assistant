@@ -1,5 +1,6 @@
 package com.codereview.agent.persistence.repository;
 
+import com.codereview.agent.api.dto.DailyMetricRow;
 import com.codereview.agent.api.dto.ReviewSummaryRow;
 import com.codereview.agent.api.dto.ToolCallRow;
 import com.codereview.agent.persistence.entity.ReviewJob;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -87,4 +89,27 @@ public interface ReviewJobRepository extends JpaRepository<ReviewJob, UUID> {
                     """,
             nativeQuery = true)
     List<ToolCallRow> findToolCallsByJobId(@Param("jobId") UUID jobId);
+
+    /**
+     * Daily aggregation for the metrics dashboard.
+     *
+     * <p>One row per UTC day in [{@code since}, now]. Days with zero reviews
+     * are omitted by Postgres' GROUP BY — the frontend fills the gaps so the
+     * chart's x-axis stays continuous.
+     */
+    @Query(
+            value = """
+                    SELECT date_trunc('day', created_at)::date            AS day,
+                           COUNT(*)                                       AS reviews,
+                           COUNT(*) FILTER (WHERE status = 'COMPLETED')   AS completed,
+                           COUNT(*) FILTER (WHERE status = 'FAILED')      AS failed,
+                           COALESCE(SUM(tokens_input), 0)                 AS tokensInput,
+                           COALESCE(SUM(tokens_output), 0)                AS tokensOutput
+                    FROM review_jobs
+                    WHERE created_at >= :since
+                    GROUP BY date_trunc('day', created_at)
+                    ORDER BY day ASC
+                    """,
+            nativeQuery = true)
+    List<DailyMetricRow> findDailyMetricsSince(@Param("since") OffsetDateTime since);
 }
