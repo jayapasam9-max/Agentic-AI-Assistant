@@ -17,6 +17,8 @@ An autonomous code review agent that analyzes GitHub pull requests, flags securi
 
 **[Open the operator dashboard →](https://agentic-ai-assistant-self.vercel.app)**
 
+![Operator dashboard — Metrics view](docs/screenshots/dashboard-metrics.png)
+
 React + TypeScript dashboard that watches the agent run in real time. Reviews list, live token-by-token reasoning stream over Server-Sent Events, and a metrics view of daily volume, token usage, and estimated cost. Built with Vite, Tailwind, and TanStack Query; deployed on Vercel Hobby and talking to the Spring Boot backend on Render. **$0/month end-to-end.** Build plan in [PHASE_5_DASHBOARDS.md](PHASE_5_DASHBOARDS.md).
 
 ## Repository layout
