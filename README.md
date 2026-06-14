@@ -144,7 +144,7 @@ MIT (see LICENSE).
 
 ## Project status
 
-This project is under active development. Current progress:
+**Shipped.** End-to-end system is live on a $0/month free tier:
 
 - [x] Project scaffold and architecture
 - [x] Spring Boot + LangChain4j integration
@@ -153,8 +153,5 @@ This project is under active development. Current progress:
 - [x] GitHub webhook integration — live, posts inline PR comments
 - [x] Free-tier cloud deploy (Render + Neon) — $0/month, live as of 2026-05-11
 - [x] React dashboard — reviews list, live SSE viewer, metrics chart — [live on Vercel](https://agentic-ai-assistant-self.vercel.app) (see [PHASE_5_DASHBOARDS.md](PHASE_5_DASHBOARDS.md))
-- [ ] AWS deployment with Terraform
-- [ ] Token-by-token reasoning stream (Day 3.5 — agent refactor to LangChain4j TokenStream)
-- [ ] Prometheus/Grafana observability
 
 Built and maintained by [@jayapasam9-max](https://github.com/jayapasam9-max).
