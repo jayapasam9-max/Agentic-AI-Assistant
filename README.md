@@ -21,6 +21,20 @@ An autonomous code review agent that analyzes GitHub pull requests, flags securi
 
 React + TypeScript dashboard that watches the agent run in real time. Reviews list, live token-by-token reasoning stream over Server-Sent Events, and a metrics view of daily volume, token usage, and estimated cost. Built with Vite, Tailwind, and TanStack Query; deployed on Vercel Hobby and talking to the Spring Boot backend on Render. **$0/month end-to-end.** Build plan in [PHASE_5_DASHBOARDS.md](PHASE_5_DASHBOARDS.md).
 
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+    PR["GitHub PR<br/>(opened / synced)"] -->|webhook| Backend["Spring Boot<br/>+ LangChain4j"]
+    Backend -->|tool calls| Claude["Claude<br/>(Anthropic API)"]
+    Claude -->|findings| Backend
+    Backend -->|inline comments| PR
+    Backend -->|reads / writes| DB[("Postgres<br/>+ pgvector")]
+    Backend -->|SSE + JSON| UI["React dashboard<br/>(Vercel)"]
+```
+
+Webhook in → agent runs the Claude tool-use loop → findings persisted to Postgres and posted back to the PR as inline comments → React dashboard reads aggregates over JSON and subscribes to live events over SSE.
+
 ## Repository layout
 
 ```
@@ -48,11 +62,29 @@ React + TypeScript dashboard that watches the agent run in real time. Reviews li
 
 ## Screenshots
 
-**Inline review comment — hardcoded password (CRITICAL):**
+### Operator dashboard
+
+**Metrics — daily review volume, token usage, and estimated cost:**
+![Operator dashboard — Metrics view](docs/screenshots/dashboard-metrics.png)
+
+<!-- Drop the following screenshots into docs/screenshots/ to enable them:
+
+**Reviews — list of recent agent runs with status, duration, and token totals:**
+![Operator dashboard — Reviews list](docs/screenshots/dashboard-reviews.png)
+
+**Review detail — live SSE event stream, findings, and tool-call timeline:**
+![Operator dashboard — Review detail with live SSE](docs/screenshots/dashboard-detail.png)
+-->
+
+### Inline PR comments
+
+**Hardcoded password (CRITICAL):**
 ![Hardcoded password finding](docs/screenshots/pr-comment-password.png)
 
-**Inline review comment — SQL injection (CRITICAL):**
+**SQL injection (CRITICAL):**
 ![SQL injection finding](docs/screenshots/pr-comment-sqli.png)
+
+### Operations
 
 **Render service logs — agent run complete:**
 ![Render logs](docs/screenshots/render-logs.png)
@@ -84,7 +116,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for a full walkthrough of how a PR flows 
 - **Phase 2:** Schema + pgvector indexing job for repo history
 - **Phase 3:** Agent loop — wire LangChain4j to Claude with the five tools
 - **Phase 4:** Kafka + SSE — move the review off the request thread, stream to clients
-- **Phase 5:** React dashboard for policies + live review viewer
+- **Phase 5:** React + TypeScript dashboard — reviews list, live SSE viewer, metrics chart (live on Vercel free tier)
 - **Phase 6:** JUnit + Mockito + Testcontainers
 - **Phase 7:** Terraform apply; push images to ECR; `kubectl apply`
 - **Phase 8:** Prometheus/Grafana dashboards for tokens, latency, tool success rate
@@ -120,9 +152,9 @@ This project is under active development. Current progress:
 - [x] Kafka event orchestration
 - [x] GitHub webhook integration — live, posts inline PR comments
 - [x] Free-tier cloud deploy (Render + Neon) — $0/month, live as of 2026-05-11
-- [x] React dashboard scaffold — [live on Vercel](https://agentic-ai-assistant-self.vercel.app) as of 2026-05-17
-- [ ] React dashboard data wiring — reviews list, live SSE viewer, metrics chart (in progress, see [PHASE_5_DASHBOARDS.md](PHASE_5_DASHBOARDS.md))
+- [x] React dashboard — reviews list, live SSE viewer, metrics chart — [live on Vercel](https://agentic-ai-assistant-self.vercel.app) (see [PHASE_5_DASHBOARDS.md](PHASE_5_DASHBOARDS.md))
 - [ ] AWS deployment with Terraform
+- [ ] Token-by-token reasoning stream (Day 3.5 — agent refactor to LangChain4j TokenStream)
 - [ ] Prometheus/Grafana observability
 
 Built and maintained by [@jayapasam9-max](https://github.com/jayapasam9-max).

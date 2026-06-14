@@ -8,6 +8,7 @@ import { FindingsList } from "@/components/FindingsList";
 import { Button } from "@/components/ui/button";
 import { useReviewDetailQuery } from "@/lib/queries";
 import { useReviewStream } from "@/lib/sse";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import {
   formatDuration,
   formatNumber,
@@ -22,6 +23,11 @@ export default function ReviewDetail() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, isError, error } = useReviewDetailQuery(id);
   const { events, state } = useReviewStream(id);
+
+  const docTitle = data
+    ? `${data.summary.repoFullName} #${data.summary.prNumber}`
+    : "Review";
+  useDocumentTitle(docTitle);
 
   const terminal = useMemo(
     () => (data ? TERMINAL_STATUSES.includes(data.summary.status) : false),

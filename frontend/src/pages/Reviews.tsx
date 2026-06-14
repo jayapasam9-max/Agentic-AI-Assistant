@@ -2,8 +2,10 @@ import { AlertCircle, Inbox } from "lucide-react";
 import { ReviewsTable } from "@/components/ReviewsTable";
 import { Button } from "@/components/ui/button";
 import { useReviewsQuery } from "@/lib/queries";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 export default function Reviews() {
+  useDocumentTitle("Reviews");
   const { data, isLoading, isError, error, refetch, isFetching } =
     useReviewsQuery();
 

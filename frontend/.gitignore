@@ -5,6 +5,11 @@ dist-ssr
 *.local
 .vite
 
+# Vite occasionally writes these next to vite.config.ts when it reloads
+# the config. They are scratch files and should never be committed.
+vite.config.ts.timestamp-*
+vite.config.*.timestamp-*
+
 # editor
 .vscode/*
 !.vscode/extensions.json

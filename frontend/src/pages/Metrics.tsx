@@ -10,6 +10,7 @@ import { StatCard } from "@/components/StatCard";
 import { MetricsChart } from "@/components/MetricsChart";
 import { Button } from "@/components/ui/button";
 import { useDailyMetricsQuery } from "@/lib/queries";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import type { DailyMetric } from "@/lib/types";
 import { formatNumber, formatUsd } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ const RANGES = [7, 14, 30] as const;
 type Range = (typeof RANGES)[number];
 
 export default function Metrics() {
+  useDocumentTitle("Metrics");
   const [days, setDays] = useState<Range>(14);
   const { data, isLoading, isError, error, refetch } = useDailyMetricsQuery(days);
 
